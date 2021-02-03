@@ -5,8 +5,7 @@ import sys
 import ply.lex as lex
 import ply.yacc as yacc
 
-from symtab import SymbolTable
-
+from models import *
 #開始はグローバル
 flg = 1
 
@@ -64,6 +63,9 @@ t_ASSIGN = ':='
 t_ignore_COMMENT = r'\#.*'
 t_ignore = ' \t'
 
+functions = []
+factorstack = []
+
 def t_IDENT(t):
     r'[a-zA-Z][a-zA-Z0-9]*'
     t.type = reserved.get(t.value, 'IDENT')
@@ -98,13 +100,27 @@ def p_program(p):# プログラム全体
     '''
     program : PROGRAM IDENT SEMICOLON outblock PERIOD
     '''
+    with open("result.ll", "w") as fout:
+        for f in functions:
+            f.print(fout)
 
 
 def p_outblock(p):# プログラムの中身
     '''
-    outblock : var_decl_part subprog_decl_part statement
+    outblock : var_decl_part subprog_decl_part outblock_action statement
     '''
 
+
+def p_outblock_action(p):
+    '''
+    outblock_action :
+    '''
+    func = Fundecl("main")
+    functions.append(func)
+    functions[-1].rettype = "i32"
+    retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
+    l = LLVMCodeAlloca(retval)
+    functions[-1].codes.append(l)
 # 変数定義
 def p_var_decl_part(p):
     '''
@@ -172,7 +188,12 @@ def p_proc_name(p):
     '''
     proc_name : IDENT proc_name_action
     '''
-
+    func = Fundecl(p[1])
+    functions.append(func)
+    retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
+    l = LLVMCodeAlloca(retval)
+    functions[-1].codes.append(l)
+    factorstack.append(retval)
 
 def p_proc_name_action(p):
     '''
@@ -212,13 +233,23 @@ def p_assignment_statement(p):
     '''
     assignment_statement : IDENT assignment_statement_action ASSIGN expression
     '''
-
+    arg1 = factorstack.pop() # 命令の第 2 引数をポップ
+    arg2 = factorstack.pop() # 命令の第 1 引数をポップ
+    l = LLVMCodeStore(arg1, arg2) # 命令を生成
+    functions[-1].codes.append(l) # 命令列の末尾に追加
 
 def p_assignment_statement_action(p):
     '''
     assignment_statement_action :
     '''
     st.lookup(p[-1])
+    d = st.lookup(p[-1])
+    if d[1] == "GLOBAL":
+        retval = Factor(Scope.GLOBAL, vname=p[-1])
+        factorstack.append(retval)
+
+    elif d[1] == "LOCAL":
+        factorstack.append(d[2])
 
 
 def p_if_statement(p):
@@ -320,6 +351,39 @@ def p_expression(p):
                | expression PLUS term
                | expression MINUS term
     '''
+    if len(p) == 3: # 右辺が 2 個の場合
+        if p[2] == "+": # p[2] が PLUS の場合
+            arg2 = factorstack.pop() # 命令の第 2 引数をポップ
+            arg1 = Factor(Scope.CONSTANT, val=0) # 命令の第 1 引数をポップ
+            retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
+            l = LLVMCodeAdd(arg1, arg2, retval) # 命令を生成
+            functions[-1].codes.append(l) # 命令列の末尾に追加
+            factorstack.append(retval) # 加算の結果をスタックにプッシュ
+
+        elif p[2] == "-": # p[2] が MINUS の場合
+            arg2 = factorstack.pop() # 命令の第 2 引数をポップ
+            arg1 = Factor(Scope.CONSTANT, val=0) # 命令の第 1 引数をポップ
+            retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
+            l = LLVMCodeSub(arg1, arg2, retval) # 命令を生成
+            functions[-1].codes.append(l) # 命令列の末尾に追加
+            factorstack.append(retval) # 減算の結果
+
+    elif len(p) == 4: # 右辺が 3 個の場合:
+        if p[2] == "+": # p[2] が PLUS の場合
+            arg2 = factorstack.pop() # 命令の第 2 引数をポップ
+            arg1 = factorstack.pop() # 命令の第 1 引数をポップ
+            retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
+            l = LLVMCodeAdd(arg1, arg2, retval) # 命令を生成
+            functions[-1].codes.append(l) # 命令列の末尾に追加
+            factorstack.append(retval) # 加算の結果をスタックにプッシュ
+
+        elif p[2] == "-": # p[2] が MINUS の場合
+            arg2 = factorstack.pop() # 命令の第 2 引数をポップ
+            arg1 = factorstack.pop() # 命令の第 1 引数をポップ
+            retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
+            l = LLVMCodeSub(arg1, arg2, retval) # 命令を生成
+            functions[-1].codes.append(l) # 命令列の末尾に追加
+            factorstack.append(retval) # 減算の結果
 
 
 def p_term(p):
@@ -328,7 +392,38 @@ def p_term(p):
          | term MULT factor
          | term DIV factor
     '''
+    if len(p) == 3: # 右辺が 2 個の場合
+        if p[2] == "*": # p[2] が PLUS の場合
+            arg2 = factorstack.pop() # 命令の第 2 引数をポップ
+            arg1 = Factor(Scope.CONSTANT, val=0) # 命令の第 1 引数をポップ
+            retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
+            l = LLVMCodeMul(arg1, arg2, retval) # 命令を生成
+            functions[-1].codes.append(l) # 命令列の末尾に追加
+            factorstack.append(retval) # 乗算の結果をスタックにプッシュ
 
+        elif p[2] == "/": # p[2] が MINUS の場合
+            arg2 = factorstack.pop() # 命令の第 2 引数をポップ
+            arg1 = Factor(Scope.CONSTANT, val=0) # 命令の第 1 引数をポップ
+            retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
+            l = LLVMCodeDiv(arg1, arg2, retval) # 命令を生成
+            functions[-1].codes.append(l) # 命令列の末尾に追加
+            factorstack.append(retval) # 除算の結果
+    elif len(p) == 4: # 右辺が 3 個の場合:
+        if p[2] == "*": # p[2] が PLUS の場合
+            arg2 = factorstack.pop() # 命令の第 2 引数をポップ
+            arg1 = factorstack.pop() # 命令の第 1 引数をポップ
+            retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
+            l = LLVMCodeMul(arg1, arg2, retval) # 命令を生成
+            functions[-1].codes.append(l) # 命令列の末尾に追加
+            factorstack.append(retval) # 乗算の結果をスタックにプッシュ
+
+        elif p[2] == "/": # p[2] が MINUS の場合
+            arg2 = factorstack.pop() # 命令の第 2 引数をポップ
+            arg1 = factorstack.pop() # 命令の第 1 引数をポップ
+            retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
+            l = LLVMCodeDiv(arg1, arg2, retval) # 命令を生成
+            functions[-1].codes.append(l) # 命令列の末尾に追加
+            factorstack.append(retval) # 除算の結果
 
 def p_factor(p):
     '''
@@ -336,7 +431,16 @@ def p_factor(p):
            | NUMBER
            | LPAREN expression RPAREN
     '''
-
+    if len(p) == 2:
+        if p[1] != None:
+            val = Factor(Scope.CONSTANT, val=p[1])
+            factorstack.append(val)
+        else:
+            arg1 = factorstack.pop()
+            retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
+            l = LLVMCODELoad(arg1, retval)
+            functions[-1].codes.append(l)
+            factorstack.append(retval)
 
 def p_var_name(p):
     '''
@@ -348,8 +452,13 @@ def p_var_name_action(p):
     '''
     var_name_action :
     '''
-    st.lookup(p[-1])
+    d = st.lookup(p[-1])
+    if d[1] == "GLOBAL":
+        retval = Factor(Scope.GLOBAL, vname=p[-1])
+        factorstack.append(retval)
 
+    elif d[1] == "LOCAL":
+        factorstack.append(d[2])
 
 def p_arg_list(p):
     '''
@@ -360,22 +469,27 @@ def p_arg_list(p):
 
 def p_id_list(p):# 変数宣言
     '''
-    id_list : IDENT id_list_action_1
-            | id_list COMMA IDENT id_list_action_2
+    id_list : IDENT id_list_action
+            | id_list COMMA IDENT id_list_action
     '''
 
 
-def p_id_list_action_1(p):
+def p_id_list_action(p):
     '''
-    id_list_action_1 :
+    id_list_action :
     '''
-    st.insert(p[-1], flg) #変数の宣言時
+    if Scope(flg).name == "GLOBAL":
+        func = Fundecl("")
+        functions.append(func)
+        retval = Factor(Scope.GLOBAL, vname=p[-1])
+        l = LLVMCodeGlobal(retval)
+        functions[-1].codes.append(l)
+        st.insert(p[-1], flg) #変数の宣言時
 
-def p_id_list_action_2(p):
-    '''
-    id_list_action_2 :
-    '''
-    st.insert(p[-1], flg) #変数の宣言時
+    elif Scope(flg).name == "LOCAL":
+        retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
+        st.insert(p[-1], flg,retval)
+
 
 #################################################################
 # 構文解析エラー時の処理
