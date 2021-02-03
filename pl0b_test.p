@@ -13,6 +13,12 @@ begin
    read(n);
    while 1 < n do
    begin
+      while 1 < n do
+   begin
+      x := n;
+      prime;
+      n := n - 1
+   end;
       x := n;
       prime;
       n := n - 1

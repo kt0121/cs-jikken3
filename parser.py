@@ -115,6 +115,8 @@ def p_outblock_action(p):
     '''
     outblock_action :
     '''
+    global index
+    index = {"if":0, "while":0, "for":0, "if_stack":[], "while_stack":[], "for_stack": []}
     func = Fundecl("main")
     functions.append(func)
     functions[-1].rettype = "i32"
@@ -188,6 +190,8 @@ def p_proc_name(p):
     '''
     proc_name : IDENT proc_name_action
     '''
+    global index
+    index = {"if":0, "while":0, "for":0, "if_stack":[], "while_stack":[], "for_stack": []}
     func = Fundecl(p[1])
     functions.append(func)
     retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
@@ -242,7 +246,6 @@ def p_assignment_statement_action(p):
     '''
     assignment_statement_action :
     '''
-    st.lookup(p[-1])
     d = st.lookup(p[-1])
     if d[1] == "GLOBAL":
         retval = Factor(Scope.GLOBAL, vname=p[-1])
@@ -254,9 +257,42 @@ def p_assignment_statement_action(p):
 
 def p_if_statement(p):
     '''
-    if_statement : IF condition THEN statement else_statement
+    if_statement : IF condition if_act_1 THEN statement if_act_2 else_statement if_act_3
     '''
 
+def p_if_act_1(p):
+    '''
+    if_act_1 :
+    '''
+    global index
+    index["if"] += 1
+    index["if_stack"].append(index["if"])
+    i = index["if_stack"][-1]
+    arg1 = factorstack.pop()
+    l = LLVMCodeBrCond(arg1, "%if.then.{}".format(str(i)), "%if.else.{}".format(str(i)))
+    functions[-1].codes.append(l)
+    l = LLVMCODELabel("if.then.{}".format(str(i)))
+    functions[-1].codes.append(l)
+
+def p_if_label_2(p):
+    '''
+    if_act_2 :
+    '''
+    i = index["if_stack"][-1]
+    l = LLVMCodeBrUncond("%if.end.{}".format(str(i)))
+    functions[-1].codes.append(l)
+    l = LLVMCODELabel("if.else.{}".format(str(i)))
+    functions[-1].codes.append(l)
+
+def p_if_act_3(p):
+    '''
+    if_act_3 :
+    '''
+    i = index["if_stack"].pop()
+    l = LLVMCodeBrUncond("%if.end.{}".format(str(i)))
+    functions[-1].codes.append(l)
+    l = LLVMCODELabel("if.end.{}".format(str(i)))
+    functions[-1].codes.append(l)
 
 def p_else_statement(p):
     '''
@@ -266,13 +302,48 @@ def p_else_statement(p):
 
 def p_while_statement(p):
     '''
-    while_statement : WHILE condition DO statement
+    while_statement : WHILE while_act_1 condition DO while_act_2 statement while_act_3
     '''
 
+def p_while_act_1(p):
+    '''
+    while_act_1 :
+    '''
+    global index
+    index["while"] += 1
+    index["while_stack"].append(index["while"])
+    i = index["while_stack"][-1]
+    l = LLVMCodeBrUncond("%while.init.{}".format(str(i)))
+    functions[-1].codes.append(l)
+    l = LLVMCODELabel("while.init")
+    functions[-1].codes.append(l)
+
+def p_while_act_2(p):
+    '''
+    while_act_2 :
+    '''
+    global index
+    i = index["while_stack"][-1]
+    arg1 = factorstack.pop()
+    l = LLVMCodeBrCond(arg1, "%while.do.{}".format(str(i)), "%while.end.{}".format(str(i)))
+    functions[-1].codes.append(l)
+    l = LLVMCODELabel("while.do.{}".format(str(i)))
+    functions[-1].codes.append(l)
+
+def p_while_act_3(p):
+    '''
+    while_act_3 :
+    '''
+    global index
+    i = index["while_stack"].pop()
+    l = LLVMCodeBrUncond("%while.init.{}".format(str(i)))
+    functions[-1].codes.append(l)
+    l = LLVMCODELabel("while.end.{}".format(str(i)))
+    functions[-1].codes.append(l)
 
 def p_for_statement(p):
     '''
-    for_statement : FOR IDENT for_statement_action ASSIGN expression TO expression DO statement
+    for_statement : FOR IDENT for_statement_action ASSIGN expression TO expression for_act_1 DO statement for_act_2
     '''
 
 
@@ -280,7 +351,34 @@ def p_for_statement_action(p):
     '''
     for_statement_action :
     '''
-    st.lookup(p[-1])
+    d = st.lookup(p[-1])
+    if d[1] == "GLOBAL":
+        retval = Factor(Scope.GLOBAL, vname=p[-1])
+        factorstack.append(retval)
+
+    elif d[1] == "LOCAL":
+        factorstack.append(d[2])
+
+def p_for_act_1(p):
+    '''
+    for_act_1 :
+    '''
+    global index
+    index["for"] += 1
+    index["for_stack"].append(index["for"])
+    i = index["for_stack"][-1]
+    range_to = factorstack.pop()
+    range_from = factorstack.pop()
+    ident = factorstack.pop()
+
+    l = LLVMCodeStore(range_from, ident)
+    functions[-1].codes.append(l)
+def p_for_act_2(p):
+    '''
+    for_act_2 :
+    '''
+    global index
+    index["for"] -= 1
 
 
 def p_proc_call_statement(p):
@@ -341,6 +439,24 @@ def p_condition(p): # Bool
               | expression LE expression
               | expression GE expression
     '''
+    if p[2] == "=":
+        c = CmpType.EQ
+    if p[2] == "<>":
+        c = CmpType.NE
+    if p[2] == ">":
+        c = CmpType.SGT
+    if p[2] == ">=":
+        c = CmpType.SGE
+    if p[2] == "<":
+        c = CmpType.SLT
+    if p[2] == "<=":
+        c = CmpType.SLE
+    arg2 = factorstack.pop() # 命令の第 2 引数をポップ
+    arg1 = factorstack.pop() # 命令の第 1 引数をポップ
+    retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
+    l = LLVMCodeIcmp(c, arg1,arg2,retval)
+    functions[-1].codes.append(l)
+    factorstack.append(retval)
 
 
 def p_expression(p):
