@@ -66,6 +66,7 @@ t_ignore = ' \t'
 functions = []
 factorstack = []
 
+enable = {"read" : 0, "write" : 0}
 def t_IDENT(t):
     r'[a-zA-Z][a-zA-Z0-9]*'
     t.type = reserved.get(t.value, 'IDENT')
@@ -121,6 +122,23 @@ def p_outblock_action(p):
     functions.append(func)
     functions[-1].rettype = "i32"
     retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
+
+    global enable
+    if enable["write"] == 1:
+        l = LLVMCodeWriteFormat()
+        functions[-1].codes.append(l)
+        l = LLVMCodeDeclarePrintf()
+        functions[-1].codes.append(l)
+        enable["write"] = 0
+
+    if enable["read"] == 1:
+        l = LLVMCodeReadFormat()
+        functions[-1].codes.append(l)
+        l = LLVMCodeDeclareScanf()
+        functions[-1].codes.append(l)
+
+        enable["read"] =0
+
     l = LLVMCodeAlloca(retval)
     functions[-1].codes.append(l)
 # 変数定義
@@ -195,6 +213,23 @@ def p_proc_name(p):
     func = Fundecl(p[1])
     functions.append(func)
     retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
+
+    global enable
+    if enable["write"] == 1:
+        l = LLVMCodeWriteFormat()
+        functions[-1].codes.append(l)
+        l = LLVMCodeDeclarePrintf()
+        functions[-1].codes.append(l)
+        enable["write"] = 0
+
+    if enable["read"] == 1:
+        l = LLVMCodeReadFormat()
+        functions[-1].codes.append(l)
+        l = LLVMCodeDeclareScanf()
+        functions[-1].codes.append(l)
+
+        enable["read"] =0
+
     l = LLVMCodeAlloca(retval)
     functions[-1].codes.append(l)
     factorstack.append(retval)
@@ -315,7 +350,7 @@ def p_while_act_1(p):
     i = index["while_stack"][-1]
     l = LLVMCodeBrUncond("%while.init.{}".format(str(i)))
     functions[-1].codes.append(l)
-    l = LLVMCODELabel("while.init")
+    l = LLVMCODELabel("while.init.{}".format(str(i)))
     functions[-1].codes.append(l)
 
 def p_while_act_2(p):
@@ -373,12 +408,44 @@ def p_for_act_1(p):
 
     l = LLVMCodeStore(range_from, ident)
     functions[-1].codes.append(l)
+
+    l = LLVMCodeBrUncond("%for.do.{}".format(str(i)))
+    functions[-1].codes.append(l)
+
+    l = LLVMCODELabel("for.cond.{}".format(str(i)))
+    functions[-1].codes.append(l)
+
+    ident_reg = Factor(Scope.LOCAL, val=functions[-1].get_register())
+    l = LLVMCODELoad(ident, ident_reg)
+    functions[-1].codes.append(l)
+
+    one = Factor(Scope.CONSTANT, val=1)
+    added_ident = Factor(Scope.LOCAL, val=functions[-1].get_register())
+    l = LLVMCodeAdd(ident_reg, one, added_ident)
+    functions[-1].codes.append(l)
+
+    l = LLVMCodeStore(added_ident, ident)
+    functions[-1].codes.append(l)
+
+    cond_reg = Factor(Scope.LOCAL, val=functions[-1].get_register())
+    l = LLVMCodeIcmp(CmpType.SLE, added_ident, range_to, cond_reg)
+    functions[-1].codes.append(l)
+
+    l = LLVMCodeBrCond(cond_reg, "%for.do.{}".format(str(i)), "%for.end.{}".format(str(i)))
+    functions[-1].codes.append(l)
+
+    l = LLVMCODELabel("for.do.{}".format(str(i)))
+    functions[-1].codes.append(l)
 def p_for_act_2(p):
     '''
     for_act_2 :
     '''
     global index
-    index["for"] -= 1
+    i = index["for_stack"].pop()
+    l = LLVMCodeBrUncond("%for.cond.{}".format(str(i)))
+    functions[-1].codes.append(l)
+    l = LLVMCODELabel("for.end.{}".format(str(i)))
+    functions[-1].codes.append(l)
 
 
 def p_proc_call_statement(p):
@@ -397,8 +464,18 @@ def p_proc_call_name_action(p):
     '''
     proc_call_name_action :
     '''
-    st.lookup(p[-1])
+    d = st.lookup(p[-1])
+    if d[1] == "GLOBAL":
+        arg = Factor(Scope.GLOBAL, vname=p[-1])
 
+    elif d[1] == "LOCAL":
+        arg = d[2]
+
+    elif d[1] == "FUNC":
+        arg = Factor(Scope.GLOBAL, vname=p[-1])
+    retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
+    l = LLVMCodeCallProc(arg, retval)
+    functions[-1].codes.append(l)
 
 def p_block_statement(p):
     '''
@@ -417,13 +494,43 @@ def p_read_statement_action(p):
     read_statement_action :
     '''
     st.lookup(p[-1])
+    d = st.lookup(p[-1])
+    if d[1] == "GLOBAL":
+        arg = Factor(Scope.GLOBAL, vname=p[-1])
+
+    elif d[1] == "LOCAL":
+        arg = d[2]
+
+    read_value_addr = Factor(Scope.LOCAL, val=functions[-1].get_register())
+    retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
+    read_value = Factor(Scope.LOCAL, val=functions[-1].get_register())
+
+    l = LLVMCodeAlloca(read_value_addr)
+    functions[-1].codes.append(l)
+
+    l = LLVMCodeRead(read_value_addr, retval)
+    functions[-1].codes.append(l)
+
+    l = LLVMCODELoad(read_value_addr, read_value)
+    functions[-1].codes.append(l)
+
+    l = LLVMCodeStore(read_value, arg)
+    functions[-1].codes.append(l)
+
+    global enable
+    enable["read"] = 1
+
 
 def p_write_statement(p):
     '''
     write_statement : WRITE LPAREN expression RPAREN
     '''
+    arg = factorstack.pop()
+    retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
+    l = LLVMCodeWrite(arg, retval)
+    functions[-1].codes.append(l)
 
-
+    enable["write"] = 1
 def p_null_statement(p):
     '''
     null_statement :
