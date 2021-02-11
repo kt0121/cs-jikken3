@@ -97,7 +97,8 @@ class Factor(object):
             return "%{}".format(self.val)
         elif self.type == Scope.CONSTANT:
             return str(self.val)
-
+        elif self.type == Scope.FUNC:
+            return "@{}".format(self.name)
 class LLVMCode(object):
     def __init__(self):
         pass
@@ -217,14 +218,14 @@ class LLVMCodeWriteFormat(LLVMCode):
     def __init__(self):
         super().__init__()
 
-    def __str__(self) -> str:
+    def __str__(self):
         return '@.str.write = private unnamed_addr constant [4 x i8] c"%d\\0A\\00", align 1'
 
 class LLVMCodeReadFormat(LLVMCode):
     def __init__(self):
         super().__init__()
 
-    def __str__(self) -> str:
+    def __str__(self):
         return '@.str.read = private unnamed_addr constant [3 x i8] c"%d\\00", align 1'
 
 class LLVMCodeWrite(LLVMCode):
@@ -233,7 +234,7 @@ class LLVMCodeWrite(LLVMCode):
         self.arg = arg
         self.retval = retval
 
-    def __str__(self) -> str:
+    def __str__(self):
         return f'{self.retval} = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str.write, i64 0, i64 0), i32 {self.arg})'
 
 class LLVMCodeRead(LLVMCode):
@@ -242,15 +243,15 @@ class LLVMCodeRead(LLVMCode):
         self.arg = arg
         self.retval = retval
 
-    def __str__(self) -> str:
+    def __str__(self):
         return f'{self.retval} = call i32 (i8*, ...) @__isoc99_scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str.read, i64 0, i64 0), i32* {self.arg})'
 
 class LLVMCodeDeclarePrintf(LLVMCode):
-    def __str__(self) -> str:
+    def __str__(self):
         return 'declare dso_local i32 @printf(i8*, ...) #1'
 
 class LLVMCodeDeclareScanf(LLVMCode):
-    def __str__(self) -> str:
+    def __str__(self):
         return 'declare dso_local i32 @__isoc99_scanf(i8*, ...) #1'
 
 class LLVMCodeCallProc(LLVMCode):
@@ -259,5 +260,5 @@ class LLVMCodeCallProc(LLVMCode):
         self.arg = arg
         self.retval = retval
 
-    def __str__(self) -> str:
+    def __str__(self):
         return f'{self.retval} = call i32 {self.arg}'
