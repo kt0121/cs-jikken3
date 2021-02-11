@@ -129,3 +129,10 @@ dmypy.json
 .pyre/
 
 /result.ll
+/ex1.p
+/opt1.p
+/pl0a.p
+/pl0b.p
+/pl0c.p
+/pl0d.p
+/parser.out

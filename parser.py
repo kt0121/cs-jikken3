@@ -578,34 +578,50 @@ def p_expression(p):
         if p[2] == "+": # p[2] が PLUS の場合
             arg2 = factorstack.pop() # 命令の第 2 引数をポップ
             arg1 = Factor(Scope.CONSTANT, val=0) # 命令の第 1 引数をポップ
-            retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
-            l = LLVMCodeAdd(arg1, arg2, retval) # 命令を生成
-            functions[-1].codes.append(l) # 命令列の末尾に追加
+            if arg2.type == Scope.CONSTANT:
+                val = arg1.val + arg2.val
+                retval = Factor(Scope.CONSTANT, val=val)
+            else:
+                retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
+                l = LLVMCodeAdd(arg1, arg2, retval) # 命令を生成
+                functions[-1].codes.append(l) # 命令列の末尾に追加
             factorstack.append(retval) # 加算の結果をスタックにプッシュ
 
         elif p[2] == "-": # p[2] が MINUS の場合
             arg2 = factorstack.pop() # 命令の第 2 引数をポップ
             arg1 = Factor(Scope.CONSTANT, val=0) # 命令の第 1 引数をポップ
-            retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
-            l = LLVMCodeSub(arg1, arg2, retval) # 命令を生成
-            functions[-1].codes.append(l) # 命令列の末尾に追加
-            factorstack.append(retval) # 減算の結果
+            if arg2.type == Scope.CONSTANT:
+                val = arg1.val - arg2.val
+                retval = Factor(Scope.CONSTANT, val=val)
+            else:
+                retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
+                l = LLVMCodeSub(arg1, arg2, retval) # 命令を生成
+                functions[-1].codes.append(l) # 命令列の末尾に追加
+            factorstack.append(retval) # 加算の結果をスタックにプッシュ
 
     elif len(p) == 4: # 右辺が 3 個の場合:
         if p[2] == "+": # p[2] が PLUS の場合
             arg2 = factorstack.pop() # 命令の第 2 引数をポップ
             arg1 = factorstack.pop() # 命令の第 1 引数をポップ
-            retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
-            l = LLVMCodeAdd(arg1, arg2, retval) # 命令を生成
-            functions[-1].codes.append(l) # 命令列の末尾に追加
+            if arg1.type == Scope.CONSTANT and arg2.type == Scope.CONSTANT:
+                val = arg1.val + arg2.val
+                retval = Factor(Scope.CONSTANT, val=val)
+            else:
+                retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
+                l = LLVMCodeAdd(arg1, arg2, retval) # 命令を生成
+                functions[-1].codes.append(l) # 命令列の末尾に追加
             factorstack.append(retval) # 加算の結果をスタックにプッシュ
 
         elif p[2] == "-": # p[2] が MINUS の場合
             arg2 = factorstack.pop() # 命令の第 2 引数をポップ
             arg1 = factorstack.pop() # 命令の第 1 引数をポップ
-            retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
-            l = LLVMCodeSub(arg1, arg2, retval) # 命令を生成
-            functions[-1].codes.append(l) # 命令列の末尾に追加
+            if arg1.type == Scope.CONSTANT and arg2.type == Scope.CONSTANT:
+                val = arg1.val - arg2.val
+                retval = Factor(Scope.CONSTANT, val=val)
+            else:
+                retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
+                l = LLVMCodeSub(arg1, arg2, retval) # 命令を生成
+                functions[-1].codes.append(l) # 命令列の末尾に追加
             factorstack.append(retval) # 減算の結果
 
 
@@ -619,34 +635,51 @@ def p_term(p):
         if p[2] == "*": # p[2] が PLUS の場合
             arg2 = factorstack.pop() # 命令の第 2 引数をポップ
             arg1 = Factor(Scope.CONSTANT, val=0) # 命令の第 1 引数をポップ
-            retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
-            l = LLVMCodeMul(arg1, arg2, retval) # 命令を生成
-            functions[-1].codes.append(l) # 命令列の末尾に追加
-            factorstack.append(retval) # 乗算の結果をスタックにプッシュ
+            if arg2.type == Scope.CONSTANT:
+                val = arg1.val * arg2.val
+                retval = Factor(Scope.CONSTANT, val=val)
+            else:
+                retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
+                l = LLVMCodeMul(arg1, arg2, retval) # 命令を生成
+                functions[-1].codes.append(l) # 命令列の末尾に追加
+            factorstack.append(retval) # 加算の結果をスタックにプッシュ
 
         elif p[2] == "/": # p[2] が MINUS の場合
             arg2 = factorstack.pop() # 命令の第 2 引数をポップ
             arg1 = Factor(Scope.CONSTANT, val=0) # 命令の第 1 引数をポップ
-            retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
-            l = LLVMCodeDiv(arg1, arg2, retval) # 命令を生成
-            functions[-1].codes.append(l) # 命令列の末尾に追加
-            factorstack.append(retval) # 除算の結果
+            if arg2.type == Scope.CONSTANT:
+                val = arg1.val / arg2.val
+                retval = Factor(Scope.CONSTANT, val=val)
+            else:
+                retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
+                l = LLVMCodeDiv(arg1, arg2, retval) # 命令を生成
+                functions[-1].codes.append(l) # 命令列の末尾に追加
+            factorstack.append(retval) # 加算の結果をスタックにプッシュ
     elif len(p) == 4: # 右辺が 3 個の場合:
         if p[2] == "*": # p[2] が PLUS の場合
             arg2 = factorstack.pop() # 命令の第 2 引数をポップ
             arg1 = factorstack.pop() # 命令の第 1 引数をポップ
-            retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
-            l = LLVMCodeMul(arg1, arg2, retval) # 命令を生成
-            functions[-1].codes.append(l) # 命令列の末尾に追加
-            factorstack.append(retval) # 乗算の結果をスタックにプッシュ
+            if arg1.type == Scope.CONSTANT and arg2.type == Scope.CONSTANT:
+                val = arg1.val * arg2.val
+                retval = Factor(Scope.CONSTANT, val=val)
+            else:
+                retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
+                l = LLVMCodeMul(arg1, arg2, retval) # 命令を生成
+                functions[-1].codes.append(l) # 命令列の末尾に追加
+            factorstack.append(retval) # 加算の結果をスタックにプッシュ
+
 
         elif p[2] == "/": # p[2] が MINUS の場合
             arg2 = factorstack.pop() # 命令の第 2 引数をポップ
             arg1 = factorstack.pop() # 命令の第 1 引数をポップ
-            retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
-            l = LLVMCodeDiv(arg1, arg2, retval) # 命令を生成
-            functions[-1].codes.append(l) # 命令列の末尾に追加
-            factorstack.append(retval) # 除算の結果
+            if arg1.type == Scope.CONSTANT and arg2.type == Scope.CONSTANT:
+                val = arg1.val / arg2.val
+                retval = Factor(Scope.CONSTANT, val=val)
+            else:
+                retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
+                l = LLVMCodeDiv(arg1, arg2, retval) # 命令を生成
+                functions[-1].codes.append(l) # 命令列の末尾に追加
+            factorstack.append(retval) # 加算の結果をスタックにプッシュ
 
 def p_factor(p):
     '''
