@@ -100,7 +100,7 @@ def p_program(p):# プログラム全体
     '''
     program : PROGRAM IDENT SEMICOLON outblock PERIOD
     '''
-    with open("result.ll", "w") as fout:
+    with open(sys.argv[2], "w") as fout:
         for f in functions:
             f.print(fout)
 
