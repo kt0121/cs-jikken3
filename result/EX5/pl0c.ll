@@ -5,14 +5,14 @@ define void @prime(){
  %1 = alloca i32, align 4
  %2 = alloca i32, align 4
  %3 = load i32, i32* @x, align 4
- %4 = div nsw i32 %3, 2
+ %4 = sdiv i32 %3, 2
  store i32 %4, i32* %2, align 4
  br label %while.init.1
  while.init.1:
  %5 = load i32, i32* @x, align 4
  %6 = load i32, i32* @x, align 4
  %7 = load i32, i32* %2, align 4
- %8 = div nsw i32 %6, %7
+ %8 = sdiv i32 %6, %7
  %9 = load i32, i32* %2, align 4
  %10 = mul nsw i32 %8, %9
  %11 = icmp ne i32 %5, %10

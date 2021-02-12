@@ -644,7 +644,7 @@ def p_term(p):
                 functions[-1].codes.append(l) # 命令列の末尾に追加
             factorstack.append(retval) # 加算の結果をスタックにプッシュ
 
-        elif p[2] == "/": # p[2] が MINUS の場合
+        elif p[2] == "div": # p[2] が MINUS の場合
             arg2 = factorstack.pop() # 命令の第 2 引数をポップ
             arg1 = Factor(Scope.CONSTANT, val=0) # 命令の第 1 引数をポップ
             if arg2.type == Scope.CONSTANT:
