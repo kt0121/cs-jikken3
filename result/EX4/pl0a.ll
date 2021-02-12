@@ -12,4 +12,5 @@ define i32 @main(){
  %6 = load i32, i32* @n, align 4
  %7 = sub nsw i32 %6, 1
  store i32 %7, i32* @n, align 4
+ ret i32 0
 }

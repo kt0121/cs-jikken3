@@ -16,7 +16,7 @@ define void @prime(){
  %9 = load i32, i32* %2, align 4
  %10 = mul nsw i32 %8, %9
  %11 = icmp ne i32 %5, %10
- br il %11,label %while.do.1, label %while.end.1
+ br i1 %11,label %while.do.1, label %while.end.1
  while.do.1:
  %12 = load i32, i32* %2, align 4
  %13 = sub nsw i32 %12, 1
@@ -25,7 +25,7 @@ define void @prime(){
  while.end.1:
  %14 = load i32, i32* %2, align 4
  %15 = icmp eq i32 %14, 1
- br il %15,label %if.then.1, label %if.else.1
+ br i1 %15,label %if.then.1, label %if.else.1
  if.then.1:
  %16 = load i32, i32* @x, align 4
  %17 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str.write, i64 0, i64 0), i32 %16)
@@ -33,6 +33,7 @@ define void @prime(){
  if.else.1:
  br label %if.end.1
  if.end.1:
+ ret void
 }
 define i32 @main(){
  @.str.write = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
@@ -50,11 +51,12 @@ define i32 @main(){
  %7 = add nsw i32 %6, 1
  store i32 %7, i32* @i, align 4
  %8 = icmp sle i32 %7, %5
- br il %8,label %for.do.1, label %for.end.1
+ br i1 %8,label %for.do.1, label %for.end.1
  for.do.1:
  %9 = load i32, i32* @i, align 4
  store i32 %9, i32* @x, align 4
  %10 = call i32 @prime
  br label %for.cond.1
  for.end.1:
+ ret i32 0
 }

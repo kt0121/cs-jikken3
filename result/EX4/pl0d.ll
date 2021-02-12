@@ -14,6 +14,7 @@ define void @fact(){
  %8 = load i32, i32* %2, align 4
  %9 = mul nsw i32 %7, %8
  store i32 %9, i32* @temp, align 4
+ ret void
 }
 define i32 @main(){
  %1 = alloca i32, align 4

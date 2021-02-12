@@ -5,7 +5,7 @@ define void @fact(){
  %2 = alloca i32, align 4
  %3 = load i32, i32* @n, align 4
  %4 = icmp sle i32 %3, 1
- br il %4,label %if.then.1, label %if.else.1
+ br i1 %4,label %if.then.1, label %if.else.1
  if.then.1:
  store i32 1, i32* @temp, align 4
  br label %if.end.1

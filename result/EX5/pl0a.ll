@@ -8,7 +8,7 @@ define i32 @main(){
  while.init.1:
  %2 = load i32, i32* @n, align 4
  %3 = icmp sgt i32 %2, 0
- br il %3,label %while.do.1, label %while.end.1
+ br i1 %3,label %while.do.1, label %while.end.1
  while.do.1:
  %4 = load i32, i32* @sum, align 4
  %5 = load i32, i32* @n, align 4
@@ -19,4 +19,5 @@ define i32 @main(){
  store i32 %8, i32* @n, align 4
  br label %while.init.1
  while.end.1:
+ ret i32 0
 }
