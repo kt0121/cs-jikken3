@@ -557,7 +557,7 @@ def p_expression(p):
                | expression MINUS term
     '''
     if len(p) == 3: # 右辺が 2 個の場合
-        if p[2] == "+": # p[2] が PLUS の場合
+        if p[1] == "+": # p[2] が PLUS の場合
             arg2 = factorstack.pop() # 命令の第 2 引数をポップ
             arg1 = Factor(Scope.CONSTANT, val=0) # 命令の第 1 引数をポップ
             retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
@@ -565,7 +565,7 @@ def p_expression(p):
             functions[-1].codes.append(l) # 命令列の末尾に追加
             factorstack.append(retval) # 加算の結果をスタックにプッシュ
 
-        elif p[2] == "-": # p[2] が MINUS の場合
+        elif p[1] == "-": # p[2] が MINUS の場合
             arg2 = factorstack.pop() # 命令の第 2 引数をポップ
             arg1 = Factor(Scope.CONSTANT, val=0) # 命令の第 1 引数をポップ
             retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
@@ -598,7 +598,7 @@ def p_term(p):
          | term DIV factor
     '''
     if len(p) == 3: # 右辺が 2 個の場合
-        if p[2] == "*": # p[2] が PLUS の場合
+        if p[1] == "*": # p[2] が PLUS の場合
             arg2 = factorstack.pop() # 命令の第 2 引数をポップ
             arg1 = Factor(Scope.CONSTANT, val=0) # 命令の第 1 引数をポップ
             retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
@@ -606,7 +606,7 @@ def p_term(p):
             functions[-1].codes.append(l) # 命令列の末尾に追加
             factorstack.append(retval) # 乗算の結果をスタックにプッシュ
 
-        elif p[2] == "div": # p[2] が MINUS の場合
+        elif p[1] == "div": # p[2] が MINUS の場合
             arg2 = factorstack.pop() # 命令の第 2 引数をポップ
             arg1 = Factor(Scope.CONSTANT, val=0) # 命令の第 1 引数をポップ
             retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
