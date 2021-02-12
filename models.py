@@ -199,7 +199,7 @@ class LLVMCodeDiv(LLVMCode):
         self.retval = retval
 
     def __str__(self):
-        return "{} = div nsw i32 {}, {}".format(str(self.retval), str(self.arg1), str(self.arg2))
+        return "{} = sdiv nsw i32 {}, {}".format(str(self.retval), str(self.arg1), str(self.arg2))
 
 class LLVMCodeIcmp(LLVMCode):
     def __init__(self, cmptype, arg1, arg2, retval):
