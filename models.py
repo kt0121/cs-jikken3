@@ -143,7 +143,7 @@ class LLVMCodeBrCond(LLVMCode):
         self.arg2 = arg2
         self.arg3 = arg3
     def __str__(self):
-        return "br il {},label {}, label {}".format(str(self.arg1), str(self.arg2), str(self.arg3))
+        return "br i1 {},label {}, label {}".format(str(self.arg1), str(self.arg2), str(self.arg3))
 
 class LLVMCodeBrUncond(LLVMCode):
     def __init__(self, arg1):
@@ -198,7 +198,7 @@ class LLVMCodeDiv(LLVMCode):
         self.retval = retval
 
     def __str__(self):
-        return "{} = sdiv nsw i32 {}, {}".format(str(self.retval), str(self.arg1), str(self.arg2))
+        return "{} = sdiv i32 {}, {}".format(str(self.retval), str(self.arg1), str(self.arg2))
 
 class LLVMCodeIcmp(LLVMCode):
     def __init__(self, cmptype, arg1, arg2, retval):
