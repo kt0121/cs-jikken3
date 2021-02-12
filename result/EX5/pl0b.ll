@@ -36,6 +36,7 @@ define void @prime(){
  if.else.1:
  br label %if.end.1
  if.end.1:
+ ret void
 }
 define i32 @main(){
  %1 = alloca i32, align 4
@@ -57,4 +58,5 @@ define i32 @main(){
  store i32 %10, i32* @n, align 4
  br label %while.init.1
  while.end.1:
+ ret i32 0
 }
