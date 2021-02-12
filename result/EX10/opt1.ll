@@ -19,4 +19,5 @@ define i32 @main(){
  store i32 %8, i32* @n, align 4
  br label %while.init.1
  while.end.1:
+ ret i32 0
 }
