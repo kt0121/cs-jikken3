@@ -744,6 +744,8 @@ def p_id_list_action(p):
 
     elif Scope(flg).name == "LOCAL":
         retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
+        l = LLVMCodeAlloca(retval)
+        functions[-1].codes.append(l)
         st.insert(p[-1], flg,retval)
 
 
