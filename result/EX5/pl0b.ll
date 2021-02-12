@@ -4,7 +4,7 @@ declare dso_local i32 @printf(i8*, ...) #1
 @.str.read = private unnamed_addr constant [3 x i8] c"%d\00", align 1
 declare dso_local i32 @__isoc99_scanf(i8*, ...) #1
 @x = common global i32 0, align 4
-define void @prime(){
+define i32 @prime(){
  %1 = alloca i32, align 4
  %2 = alloca i32, align 4
  %3 = load i32, i32* @x, align 4
@@ -36,7 +36,7 @@ define void @prime(){
  if.else.1:
  br label %if.end.1
  if.end.1:
- ret void
+ret i32 0
 }
 define i32 @main(){
  %1 = alloca i32, align 4
@@ -52,11 +52,11 @@ define i32 @main(){
  while.do.1:
  %7 = load i32, i32* @n, align 4
  store i32 %7, i32* @x, align 4
- %8 = call i32 @prime
+ %8 = call i32 @prime()
  %9 = load i32, i32* @n, align 4
  %10 = sub nsw i32 %9, 1
  store i32 %10, i32* @n, align 4
  br label %while.init.1
  while.end.1:
- ret i32 0
+ret i32 0
 }

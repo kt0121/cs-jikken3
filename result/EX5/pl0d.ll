@@ -4,7 +4,7 @@ declare dso_local i32 @printf(i8*, ...) #1
 @.str.read = private unnamed_addr constant [3 x i8] c"%d\00", align 1
 declare dso_local i32 @__isoc99_scanf(i8*, ...) #1
 @temp = common global i32 0, align 4
-define void @fact(){
+define i32 @fact(){
  %1 = alloca i32, align 4
  %2 = alloca i32, align 4
  %3 = load i32, i32* @n, align 4
@@ -19,14 +19,14 @@ define void @fact(){
  %6 = load i32, i32* @n, align 4
  %7 = sub nsw i32 %6, 1
  store i32 %7, i32* @n, align 4
- %8 = call i32 @fact
+ %8 = call i32 @fact()
  %9 = load i32, i32* @temp, align 4
  %10 = load i32, i32* %2, align 4
  %11 = mul nsw i32 %9, %10
  store i32 %11, i32* @temp, align 4
  br label %if.end.1
  if.end.1:
- ret void
+ret i32 0
 }
 define i32 @main(){
  %1 = alloca i32, align 4
@@ -34,8 +34,8 @@ define i32 @main(){
  %3 = call i32 (i8*, ...) @__isoc99_scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str.read, i64 0, i64 0), i32* %2)
  %4 = load i32, i32* %2, align 4
  store i32 %4, i32* @n, align 4
- %5 = call i32 @fact
+ %5 = call i32 @fact()
  %6 = load i32, i32* @temp, align 4
  %7 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str.write, i64 0, i64 0), i32 %6)
- ret i32 0
+ret i32 0
 }

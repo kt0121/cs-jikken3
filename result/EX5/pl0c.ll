@@ -5,7 +5,7 @@ declare dso_local i32 @printf(i8*, ...) #1
 declare dso_local i32 @__isoc99_scanf(i8*, ...) #1
 @x = common global i32 0, align 4
 @i = common global i32 0, align 4
-define void @prime(){
+define i32 @prime(){
  %1 = alloca i32, align 4
  %2 = alloca i32, align 4
  %3 = load i32, i32* @x, align 4
@@ -37,6 +37,7 @@ define void @prime(){
  if.else.1:
  br label %if.end.1
  if.end.1:
+ret i32 0
 }
 define i32 @main(){
  %1 = alloca i32, align 4
@@ -56,7 +57,8 @@ define i32 @main(){
  for.do.1:
  %9 = load i32, i32* @i, align 4
  store i32 %9, i32* @x, align 4
- %10 = call i32 @prime
+ %10 = call i32 @prime()
  br label %for.cond.1
  for.end.1:
+ret i32 0
 }

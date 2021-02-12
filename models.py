@@ -67,7 +67,7 @@ class Fundecl(object):
         self.name = name
         self.codes = []
         self.cntr = 1
-        self.rettype = "void"
+        self.rettype = "i32"
 
     def get_register(self):
         t = self.cntr
@@ -79,6 +79,7 @@ class Fundecl(object):
             print("define {} @{}(){{".format(self.rettype, self.name), file=fp)
             for l in self.codes:
                 print(" {}".format(l), file=fp)
+            print("ret i32 0", file=fp)
             print("}", file=fp)
         else:
             for l in self.codes:
@@ -261,4 +262,4 @@ class LLVMCodeCallProc(LLVMCode):
         self.retval = retval
 
     def __str__(self):
-        return f'{self.retval} = call i32 {self.arg}'
+        return f'{self.retval} = call i32 {self.arg}()'
