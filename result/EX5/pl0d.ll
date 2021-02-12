@@ -22,6 +22,7 @@ define void @fact(){
  store i32 %11, i32* @temp, align 4
  br label %if.end.1
  if.end.1:
+ ret void
 }
 define i32 @main(){
  %1 = alloca i32, align 4
@@ -32,4 +33,5 @@ define i32 @main(){
  %5 = call i32 @fact
  %6 = load i32, i32* @temp, align 4
  %7 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str.write, i64 0, i64 0), i32 %6)
+ ret i32 0
 }

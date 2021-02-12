@@ -18,4 +18,5 @@ define void @fact(){
 define i32 @main(){
  %1 = alloca i32, align 4
  %2 = load i32, i32* @temp, align 4
+ ret i32 0
 }
