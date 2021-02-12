@@ -130,6 +130,8 @@ dmypy.json
 
 /result.ll
 /ex1.p
+/ex4.p
+/ex4_test.p
 /opt1.p
 /pl0a.p
 /pl0b.p
