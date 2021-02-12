@@ -110,7 +110,21 @@ def p_outblock(p):# プログラムの中身
     '''
     outblock : var_decl_part subprog_decl_part outblock_action statement
     '''
+    global enable
+    if enable["write"] == 1:
+        l = LLVMCodeWriteFormat()
+        functions[0].codes.append(l)
+        l = LLVMCodeDeclarePrintf()
+        functions[0].codes.append(l)
+        enable["write"] = 0
 
+    if enable["read"] == 1:
+        l = LLVMCodeReadFormat()
+        functions[0].codes.append(l)
+        l = LLVMCodeDeclareScanf()
+        functions[0].codes.append(l)
+
+        enable["read"] =0
 
 def p_outblock_action(p):
     '''
@@ -118,26 +132,11 @@ def p_outblock_action(p):
     '''
     global index
     index = {"if":0, "while":0, "for":0, "if_stack":[], "while_stack":[], "for_stack": []}
+
     func = Fundecl("main")
     functions.append(func)
     functions[-1].rettype = "i32"
     retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
-
-    global enable
-    if enable["write"] == 1:
-        l = LLVMCodeWriteFormat()
-        functions[-1].codes.append(l)
-        l = LLVMCodeDeclarePrintf()
-        functions[-1].codes.append(l)
-        enable["write"] = 0
-
-    if enable["read"] == 1:
-        l = LLVMCodeReadFormat()
-        functions[-1].codes.append(l)
-        l = LLVMCodeDeclareScanf()
-        functions[-1].codes.append(l)
-
-        enable["read"] =0
 
     l = LLVMCodeAlloca(retval)
     functions[-1].codes.append(l)
@@ -213,22 +212,6 @@ def p_proc_name(p):
     func = Fundecl(p[1])
     functions.append(func)
     retval = Factor(Scope.LOCAL, val=functions[-1].get_register())
-
-    global enable
-    if enable["write"] == 1:
-        l = LLVMCodeWriteFormat()
-        functions[-1].codes.append(l)
-        l = LLVMCodeDeclarePrintf()
-        functions[-1].codes.append(l)
-        enable["write"] = 0
-
-    if enable["read"] == 1:
-        l = LLVMCodeReadFormat()
-        functions[-1].codes.append(l)
-        l = LLVMCodeDeclareScanf()
-        functions[-1].codes.append(l)
-
-        enable["read"] =0
 
     l = LLVMCodeAlloca(retval)
     functions[-1].codes.append(l)
